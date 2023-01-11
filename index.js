@@ -45,13 +45,13 @@ bot.on('message', async msg => {
    
   }
   
-  g
 })
 
-bot.on('callback_query', msg => {
+bot.on('callback_query', async msg => {
   
   const data = msg.data
   const chatId = msg.message.chat.id
   clients.username = msg.from.username
   addUser(msg.from.username, data, 'now')
+   await bot.sendMessage(chatId, 'Good')
 })
