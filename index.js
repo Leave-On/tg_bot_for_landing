@@ -130,7 +130,7 @@ const checkForNewData = async () => {
    } catch (e) {
     console.log(e)
   }
-}
+} 
 
   
 
