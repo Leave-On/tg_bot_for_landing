@@ -19,12 +19,9 @@ const saveData = async (userObject) => {
       if (userObject === allUrists) {
         const urist = user.keys().next().value
         const response = await supabase.from('urists').select('*').eq('username', urist)
-        // console.log(response)
         if (response.data.length === 0) {
            await supabase.from('urists').insert( data ) 
-          // console.log(' new urist added')
         }
-        // console.log('noone added')
       }
     })
   } catch (e) {
@@ -59,7 +56,6 @@ const addUrist = (username, chatId, userName) => {
   uristDb.set(username, uristObject)
   
   allUrists[username] = uristDb
-  
   saveData(allUrists)
 }
 
@@ -87,13 +83,12 @@ const addUserData = (msg, chatId) => {
 
 const checkForNewData = async () => {
   try {
+    let lastSentTimestamp = null
     const response = await supabase.from('users').select('*').eq('distributed', 'false')
     if(response.data.length > 0){
         response.data.forEach(async (row) => {
-          // console.log(urists.values().next().value)
           console.log(row)
           const executor = await supabase.from('urists').select('*').eq('username', urists.values().next().value)
-
           const chatId = row.chatId
           const date = moment(row.created_at).format("YYYY-MM-DD HH:mm")
           console.log(chatId)
@@ -111,28 +106,26 @@ const checkForNewData = async () => {
               ]
             })
           }
-          // url: `https://t.me/${row.username}`,
-          // https://api.telegram.org/bot${token}?start?chat_id=${chatId}
-          bot.sendMessage(executor.data[0].chatId, `${date} \n${row.username} \n${row.userName} \n${row.question}`, taskManagerOptions)
 
+          bot.sendMessage(executor.data[0].chatId, `${date} \n${row.username} \n${row.userName} \n${row.question}`, taskManagerOptions)
+          lastSentTimestamp = row.sent_at
           bot.on('callback_query',  async msg => {
             if (/task taken/.test(msg.data)) {
               console.log('taken')
               bot.sendMessage(row.chatId, `For your request ${row.question} has been assigned ${executor.data[0].userName}. He will contact you shortly`)
               bot.sendMessage(executor.data[0].chatId, `To start chat with ${row.userName} click the link`, assignmentOption)
-              const updateDistribution = await supabase.from('users').update({'distriburted': 'true'}).eq('id', row.id)
+              const updateDistribution = await supabase.from('users').update({'distributed': 'true'}).eq('id', row.id)
+              console.log(updateDistribution)
               console.log(row)
               }
                bot.answerCallbackQuery(msg.id)
             }) 
         });
       }
-   } catch (e) {
+  } catch (e) {
     console.log(e)
   }
 } 
-
-  
 
 
 const replyOptions = {
@@ -162,8 +155,6 @@ bot.onText(/\/start/, msg => {
      bot.sendMessage(chatId, 'hello, choose your problem and we\'ll find somoene to help you', replyOptions)
    
   }
-  
-  
 })
 
 bot.on('callback_query',  msg => {
